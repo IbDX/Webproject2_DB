@@ -24,7 +24,6 @@ The frontend should call:
 
 ## GitHub Pages integration
 Set `FRONTEND_ORIGIN` to your Pages origin, for example `https://username.github.io` or your custom Pages domain.
-For local development with Live Server or similar, the backend also accepts `http://localhost:*` and `http://127.0.0.1:*` origins.
 
 For cross-site session cookies, the backend expects:
 - `SESSION_COOKIE_SAMESITE=None`

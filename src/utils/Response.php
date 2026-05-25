@@ -4,7 +4,6 @@
  */
 
 class Response {
-
     public static function applyCorsHeaders() {
         $requestOrigin = trim($_SERVER['HTTP_ORIGIN'] ?? '');
         $allowedOrigins = array_filter(array_map('trim', explode(',', getenv('FRONTEND_ORIGIN') ?: '')));
@@ -32,7 +31,7 @@ class Response {
             header('Vary: Origin');
         }
     }
-    
+
     private static $statusCodes = [
         200 => 'OK',
         201 => 'Created',
@@ -54,7 +53,6 @@ class Response {
      * @param array $headers Additional headers
      */
     public static function json($data, $statusCode = 200, $headers = []) {
-        self::applyCorsHeaders();
         http_response_code($statusCode);
         
         header('Content-Type: application/json; charset=utf-8');
@@ -191,7 +189,6 @@ class Response {
      * @param int $statusCode HTTP status code
      */
     public static function html($html, $statusCode = 200) {
-        self::applyCorsHeaders();
         http_response_code($statusCode);
         header('Content-Type: text/html; charset=utf-8');
         echo $html;

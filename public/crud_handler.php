@@ -12,12 +12,7 @@ header('X-Content-Type-Options: nosniff');
 $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $allowedOrigins = array_filter(array_map('trim', explode(',', getenv('FRONTEND_ORIGIN') ?: '')));
 
-$isLocalDevOrigin = false;
-if ($requestOrigin !== '') {
-    $isLocalDevOrigin = preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#', $requestOrigin) === 1;
-}
-
-if ($requestOrigin !== '' && ($isLocalDevOrigin || in_array($requestOrigin, $allowedOrigins, true))) {
+if ($requestOrigin !== '' && in_array($requestOrigin, $allowedOrigins, true)) {
     header('Access-Control-Allow-Origin: ' . $requestOrigin);
     header('Access-Control-Allow-Credentials: true');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');

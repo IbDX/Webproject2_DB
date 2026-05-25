@@ -18,12 +18,19 @@ header('X-XSS-Protection: 1; mode=block');
 define('APP_ROOT', dirname(__FILE__));
 define('APP_ENV', getenv('APP_ENV') ?: 'production');
 
-require_once APP_ROOT . '/src/utils/Response.php';
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = array_filter(array_map('trim', explode(',', getenv('FRONTEND_ORIGIN') ?: '')));
 
-Response::applyCorsHeaders();
+if ($requestOrigin !== '' && in_array($requestOrigin, $allowedOrigins, true)) {
+    header('Access-Control-Allow-Origin: ' . $requestOrigin);
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Vary: Origin');
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+    http_response_code(204);
     exit;
 }
 
