@@ -5,30 +5,22 @@
 
 class Response {
     public static function applyCorsHeaders() {
-        $requestOrigin = trim($_SERVER['HTTP_ORIGIN'] ?? '');
-        $allowedOrigins = array_filter(array_map('trim', explode(',', getenv('FRONTEND_ORIGIN') ?: '')));
-        $isDevelopment = defined('APP_ENV') && APP_ENV === 'development';
+        $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $allowedOrigins = ['https://ibdx.github.io'];
+        $isLocalDevOrigin = $requestOrigin !== '' && preg_match('#^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$#', $requestOrigin) === 1;
 
-        $isLocalDevOrigin = false;
-        $isSecureHttpsOrigin = false;
-        
-        if ($requestOrigin !== '') {
-            $isLocalDevOrigin = preg_match('#^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$#', $requestOrigin) === 1;
-            $isSecureHttpsOrigin = strpos($requestOrigin, 'https://') === 0;
-        }
-
-        // Allow CORS if:
-        // 1. Development mode (all origins)
-        // 2. Local dev origin (127.0.0.1, localhost, ::1)
-        // 3. Origin is in the allowed list
-        // 4. Secure HTTPS origin (when not in production-only mode)
-        if ($requestOrigin !== '' && ($isDevelopment || $isLocalDevOrigin || in_array($requestOrigin, $allowedOrigins, true) || $isSecureHttpsOrigin)) {
+        if ($requestOrigin !== '' && ($isLocalDevOrigin || in_array($requestOrigin, $allowedOrigins, true))) {
             header('Access-Control-Allow-Origin: ' . $requestOrigin);
             header('Access-Control-Allow-Credentials: true');
             header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, ngrok-skip-browser-warning');
             header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
             header('Access-Control-Max-Age: 86400');
             header('Vary: Origin');
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit();
         }
     }
 
