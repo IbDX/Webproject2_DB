@@ -9,6 +9,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
+    alias_name VARCHAR(100) DEFAULT NULL,
     last_name VARCHAR(100) NOT NULL,
     phone_number VARCHAR(20),
     date_of_birth DATE NOT NULL,
@@ -23,6 +24,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
+    INDEX idx_alias_name (alias_name),
     INDEX idx_status (status),
     INDEX idx_created_at (created_at)
 );
