@@ -4,6 +4,26 @@
  */
 
 class Response {
+
+    public static function applyCorsHeaders() {
+        $requestOrigin = trim($_SERVER['HTTP_ORIGIN'] ?? '');
+        $allowedOrigins = array_filter(array_map('trim', explode(',', getenv('FRONTEND_ORIGIN') ?: '')));
+        $isDevelopment = defined('APP_ENV') && APP_ENV === 'development';
+
+        $isLocalDevOrigin = false;
+        if ($requestOrigin !== '') {
+            $isLocalDevOrigin = preg_match('#^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$#', $requestOrigin) === 1;
+        }
+
+        if ($requestOrigin !== '' && ($isDevelopment || $isLocalDevOrigin || in_array($requestOrigin, $allowedOrigins, true))) {
+            header('Access-Control-Allow-Origin: ' . $requestOrigin);
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, ngrok-skip-browser-warning');
+            header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+            header('Access-Control-Max-Age: 86400');
+            header('Vary: Origin');
+        }
+    }
     
     private static $statusCodes = [
         200 => 'OK',
@@ -26,6 +46,7 @@ class Response {
      * @param array $headers Additional headers
      */
     public static function json($data, $statusCode = 200, $headers = []) {
+        self::applyCorsHeaders();
         http_response_code($statusCode);
         
         header('Content-Type: application/json; charset=utf-8');
@@ -162,6 +183,7 @@ class Response {
      * @param int $statusCode HTTP status code
      */
     public static function html($html, $statusCode = 200) {
+        self::applyCorsHeaders();
         http_response_code($statusCode);
         header('Content-Type: text/html; charset=utf-8');
         echo $html;

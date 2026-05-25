@@ -15,6 +15,16 @@
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
+
+    Header always set Access-Control-Allow-Origin "%{Origin}i" env=CORS_ORIGIN
+    Header always set Access-Control-Allow-Credentials "true" env=CORS_ORIGIN
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With" env=CORS_ORIGIN
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" env=CORS_ORIGIN
+    Header always set Vary "Origin" env=CORS_ORIGIN
+</IfModule>
+
+<IfModule mod_setenvif.c>
+    SetEnvIfNoCase Origin "^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$" CORS_ORIGIN=1
 </IfModule>
 
 Options -Indexes

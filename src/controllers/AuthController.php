@@ -10,13 +10,34 @@ require_once __DIR__ . '/../utils/Response.php';
 require_once __DIR__ . '/../utils/Validator.php';
 
 class AuthController {
+
+    /**
+     * Read the request body as JSON first, then fall back to form-encoded input.
+     */
+    private static function getInput() {
+        $rawInput = file_get_contents('php://input');
+        $jsonInput = json_decode($rawInput, true);
+
+        if (is_array($jsonInput)) {
+            return $jsonInput;
+        }
+
+        $formInput = [];
+        parse_str($rawInput, $formInput);
+
+        if (!empty($formInput)) {
+            return $formInput;
+        }
+
+        return $_POST;
+    }
     
     /**
      * Register New User
      */
     public static function register() {
         // Get JSON input
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = self::getInput();
         
         if (!$input) {
             Response::error('Invalid request', 400);
@@ -44,7 +65,7 @@ class AuthController {
      */
     public static function login() {
         // Get JSON input
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = self::getInput();
         
         if (!$input || empty($input['email']) || empty($input['password'])) {
             Response::validationError(['email' => 'Email and password required']);
