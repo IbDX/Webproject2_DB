@@ -135,5 +135,4 @@ CREATE TABLE demo_items (
 -- Sample: Generate unique account numbers for demo
 -- ALTER TABLE accounts MODIFY account_number VARCHAR(20) GENERATED ALWAYS AS (CONCAT('ACC', LPAD(account_id, 10, '0'))) STORED;
 
--- Query to verify schema integrity
-SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE();
+-- Schema import complete.

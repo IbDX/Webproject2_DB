@@ -1,4 +1,18 @@
 <?php
+$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = array_filter(array_map('trim', explode(',', getenv('FRONTEND_ORIGIN') ?: '')));
+$isDevelopment = getenv('APP_ENV') === 'development';
+$isLocalDevOrigin = $requestOrigin !== '' && preg_match('#^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$#', $requestOrigin) === 1;
+
+if ($requestOrigin !== '' && ($isDevelopment || $isLocalDevOrigin || in_array($requestOrigin, $allowedOrigins, true))) {
+    header('Access-Control-Allow-Origin: ' . $requestOrigin);
+    header('Access-Control-Allow-Credentials: true');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, ngrok-skip-browser-warning');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Max-Age: 86400');
+    header('Vary: Origin');
+}
+
 /**
  * Simple CRUD handler for demo_items table
  * - Demonstrates usage of $_POST (form submissions)
@@ -8,17 +22,6 @@
 require_once __DIR__ . '/../config/database.php';
 
 header('X-Content-Type-Options: nosniff');
-
-$requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$allowedOrigins = array_filter(array_map('trim', explode(',', getenv('FRONTEND_ORIGIN') ?: '')));
-
-if ($requestOrigin !== '' && in_array($requestOrigin, $allowedOrigins, true)) {
-    header('Access-Control-Allow-Origin: ' . $requestOrigin);
-    header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    header('Vary: Origin');
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
