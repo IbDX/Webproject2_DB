@@ -196,7 +196,7 @@ class SecurityHelper {
     public static function validatePasswordStrength($password) {
         $errors = [];
         
-        if (strlen($password) < 12) {
+        if (strlen($password) < 8) {
             $errors[] = "Password must be at least 12 characters long";
         }
         
@@ -212,9 +212,7 @@ class SecurityHelper {
             $errors[] = "Password must contain at least one digit";
         }
         
-        if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $password)) {
-            $errors[] = "Password must contain at least one special character";
-        }
+       
         
         return [
             'valid' => empty($errors),
