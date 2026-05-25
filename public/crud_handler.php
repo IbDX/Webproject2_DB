@@ -6,7 +6,7 @@ $isLocalDevOrigin = $requestOrigin !== '' && preg_match('#^https?://(localhost|1
 if ($requestOrigin !== '' && ($isLocalDevOrigin || in_array($requestOrigin, $allowedOrigins, true))) {
     header('Access-Control-Allow-Origin: ' . $requestOrigin);
     header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, ngrok-skip-browser-warning');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin');
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
     header('Access-Control-Max-Age: 86400');
     header('Vary: Origin');
@@ -27,10 +27,7 @@ require_once __DIR__ . '/../config/database.php';
 
 header('X-Content-Type-Options: nosniff');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
+
 
 $useApi = isset($_GET['api']) && $_GET['api'] == '1';
 
