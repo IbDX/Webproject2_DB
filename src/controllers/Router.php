@@ -124,11 +124,13 @@ class Router {
         AuthMiddleware::requireAuth();
         
         if (empty(self::$params[0])) {
-            // List accounts
-            if (self::$method !== 'GET') {
+            if (self::$method === 'GET') {
+                AccountController::listAccounts();
+            } elseif (self::$method === 'POST') {
+                AccountController::createAccount();
+            } else {
                 Response::error('Method not allowed', 405);
             }
-            AccountController::listAccounts();
         } else {
             $accountId = self::$params[0];
             $action = self::$params[1] ?? '';
@@ -164,6 +166,20 @@ class Router {
                     AccountController::transfer($accountId);
                     break;
                     
+                case 'deactivate':
+                    if (self::$method !== 'POST') {
+                        Response::error('Method not allowed', 405);
+                    }
+                    AccountController::deactivateAccount($accountId);
+                    break;
+
+                case 'activate':
+                    if (self::$method !== 'POST') {
+                        Response::error('Method not allowed', 405);
+                    }
+                    AccountController::activateAccount($accountId);
+                    break;
+
                 case 'close':
                     if (self::$method !== 'POST') {
                         Response::error('Method not allowed', 405);
@@ -251,11 +267,13 @@ class Router {
         AuthMiddleware::requireAuth();
         
         if (empty(self::$params[0])) {
-            // List beneficiaries
-            if (self::$method !== 'GET') {
+            if (self::$method === 'GET') {
+                TransactionController::listBeneficiaries();
+            } elseif (self::$method === 'POST') {
+                TransactionController::addBeneficiary();
+            } else {
                 Response::error('Method not allowed', 405);
             }
-            TransactionController::listBeneficiaries();
         } else {
             $beneficiaryId = self::$params[0];
             $action = self::$params[1] ?? '';

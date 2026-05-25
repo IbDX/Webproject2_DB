@@ -4,6 +4,8 @@
  */
 
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/Account.php';
+require_once __DIR__ . '/User.php';
 require_once __DIR__ . '/../utils/Validator.php';
 
 class Beneficiary {
@@ -12,18 +14,22 @@ class Beneficiary {
      * Add Beneficiary
      * 
      * @param int $userId User ID
-     * @param string $accountNumber Account number
-     * @param string $beneficiaryName Beneficiary name
+     * @param string $beneficiaryName Beneficiary alias/display name
+        * @param string $lookupType Lookup type: phone_number or profile_alias
+        * @param string $lookupValue Phone number or profile alias
      * @param string $bankName Bank name (optional)
      * @param string $relationship Relationship description
      * @return array Result
      */
-    public static function add($userId, $accountNumber, $beneficiaryName, $bankName = null, $relationship = null) {
+    public static function add($userId, $beneficiaryName, $lookupType, $lookupValue, $bankName = null, $relationship = null) {
         // Validate
         Validator::clearErrors();
-        Validator::required($accountNumber, 'Account Number');
-        Validator::required($beneficiaryName, 'Beneficiary Name');
-        Validator::maxLength($beneficiaryName, 100, 'Beneficiary Name');
+        Validator::required($beneficiaryName, 'Alias Name');
+        Validator::maxLength($beneficiaryName, 100, 'Alias Name');
+        Validator::required($lookupValue, 'Account Number or Phone Number');
+
+        $allowedLookupTypes = ['phone_number', 'profile_alias'];
+        $lookupType = in_array($lookupType, $allowedLookupTypes, true) ? $lookupType : 'phone_number';
         
         if (Validator::hasErrors()) {
             return [
@@ -34,11 +40,39 @@ class Beneficiary {
         }
         
         try {
-            // Check if account exists and is active
-            $targetAccount = fetchOne(
-                "SELECT account_id FROM accounts WHERE account_number = ? AND status = 'active'",
-                [$accountNumber]
-            );
+            // Resolve target account by phone number or profile alias
+            if ($lookupType === 'phone_number') {
+                Validator::phone($lookupValue, 'Phone Number');
+
+                if (Validator::hasErrors()) {
+                    return [
+                        'success' => false,
+                        'message' => 'Validation failed',
+                        'errors' => Validator::getErrors()
+                    ];
+                }
+
+                $targetUser = User::getByPhone($lookupValue);
+                if (!$targetUser) {
+                    return [
+                        'success' => false,
+                        'message' => 'Phone number not found'
+                    ];
+                }
+
+                $targetAccount = Account::getActiveByUserId($targetUser['user_id']);
+            } elseif ($lookupType === 'profile_alias') {
+                $targetUser = User::getByAlias($lookupValue);
+
+                if (!$targetUser) {
+                    return [
+                        'success' => false,
+                        'message' => 'Profile alias not found'
+                    ];
+                }
+
+                $targetAccount = Account::getActiveByUserId($targetUser['user_id']);
+            }
             
             if (!$targetAccount) {
                 return [
@@ -46,11 +80,18 @@ class Beneficiary {
                     'message' => 'Account not found or inactive'
                 ];
             }
+
+            if ((int)$targetAccount['user_id'] === (int)$userId) {
+                return [
+                    'success' => false,
+                    'message' => 'You cannot add your own account as a beneficiary'
+                ];
+            }
             
             // Check if already added
             $existing = fetchOne(
                 "SELECT beneficiary_id FROM beneficiaries WHERE user_id = ? AND account_number = ?",
-                [$userId, $accountNumber]
+                [$userId, $targetAccount['account_number']]
             );
             
             if ($existing) {
@@ -69,7 +110,7 @@ class Beneficiary {
             
             $beneficiaryId = insert($query, [
                 $userId,
-                $accountNumber,
+                $targetAccount['account_number'],
                 $beneficiaryName,
                 $bankName,
                 $relationship
@@ -82,7 +123,11 @@ class Beneficiary {
                 'beneficiary',
                 $beneficiaryId,
                 [],
-                ['account_number' => $accountNumber, 'name' => $beneficiaryName],
+                [
+                    'account_number' => $targetAccount['account_number'],
+                    'name' => $beneficiaryName,
+                    'lookup_type' => $lookupType
+                ],
                 'success'
             );
             

@@ -10,10 +10,10 @@
  */
 
 // Database Configuration
-define('DB_HOST', getenv('DB_HOST') ?: 'sql112.infinityfree.com');
-define('DB_NAME', getenv('DB_NAME') ?: 'if0_42012860_db_scure_bank');
-define('DB_USER', getenv('DB_USER') ?: 'if0_42012860');
-define('DB_PASSWORD', getenv('DB_PASSWORD') ?: '13579batman');
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_NAME', getenv('DB_NAME') ?: 'banking_app_db');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASSWORD', getenv('DB_PASSWORD') ?: '12345678');
 define('DB_PORT', (int)(getenv('DB_PORT') ?: 3306));
 define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
 

@@ -88,11 +88,16 @@ class TransactionController {
     public static function addBeneficiary() {
         $userId = AuthMiddleware::getCurrentUserID();
         $input = json_decode(file_get_contents('php://input'), true);
+
+        $beneficiaryName = $input['alias_name'] ?? $input['beneficiary_name'] ?? '';
+        $lookupType = $input['lookup_type'] ?? (!empty($input['profile_alias']) ? 'profile_alias' : 'phone_number');
+        $lookupValue = $input['lookup_value'] ?? ($input['phone_number'] ?? ($input['profile_alias'] ?? ''));
         
         // Validate input
         Validator::clearErrors();
-        Validator::required($input['account_number'] ?? '', 'Account Number');
-        Validator::required($input['beneficiary_name'] ?? '', 'Beneficiary Name');
+        Validator::required($beneficiaryName, 'Alias Name');
+        $lookupLabel = $lookupType === 'profile_alias' ? 'Profile Alias' : 'Phone Number';
+        Validator::required($lookupValue, $lookupLabel);
         
         if (Validator::hasErrors()) {
             Response::validationError(Validator::getErrors());
@@ -101,8 +106,9 @@ class TransactionController {
         // Add beneficiary
         $result = Beneficiary::add(
             $userId,
-            $input['account_number'],
-            $input['beneficiary_name'],
+            $beneficiaryName,
+            $lookupType,
+            $lookupValue,
             $input['bank_name'] ?? null,
             $input['relationship'] ?? null
         );

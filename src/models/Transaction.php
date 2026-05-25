@@ -96,12 +96,32 @@ class Transaction {
                 $referenceNumber,
                 $metadata
             ]);
+
+            if (!$transactionId) {
+                rollbackTransaction();
+                return [
+                    'success' => false,
+                    'message' => 'Transfer could not be recorded'
+                ];
+            }
             
             // Deduct from source
-            Account::updateBalance($fromAccountId, -$amount);
+            if (!Account::updateBalance($fromAccountId, -$amount)) {
+                rollbackTransaction();
+                return [
+                    'success' => false,
+                    'message' => 'Transfer failed while updating source account'
+                ];
+            }
             
             // Add to destination
-            Account::updateBalance($toAccountId, $amount);
+            if (!Account::updateBalance($toAccountId, $amount)) {
+                rollbackTransaction();
+                return [
+                    'success' => false,
+                    'message' => 'Transfer failed while updating destination account'
+                ];
+            }
             
             commitTransaction();
             

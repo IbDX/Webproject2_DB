@@ -130,6 +130,28 @@ class User {
         $query = "SELECT * FROM users WHERE email = ?";
         return fetchOne($query, [$email]);
     }
+
+    /**
+     * Get User by Phone Number
+     *
+     * @param string $phoneNumber Phone number
+     * @return array|null User data
+     */
+    public static function getByPhone($phoneNumber) {
+        $query = "SELECT * FROM users WHERE phone_number = ?";
+        return fetchOne($query, [$phoneNumber]);
+    }
+
+    /**
+     * Get User by Alias Name
+     *
+     * @param string $aliasName Profile alias
+     * @return array|null User data
+     */
+    public static function getByAlias($aliasName) {
+        $query = "SELECT * FROM users WHERE alias_name = ?";
+        return fetchOne($query, [$aliasName]);
+    }
     
     /**
      * Update User Profile
@@ -142,6 +164,9 @@ class User {
         // Validate
         if (!empty($data['first_name'])) {
             Validator::required($data['first_name'], 'First Name');
+        }
+        if (!empty($data['alias_name'])) {
+            Validator::maxLength($data['alias_name'], 100, 'Alias Name');
         }
         if (!empty($data['phone_number'])) {
             Validator::phone($data['phone_number'], 'Phone Number');
@@ -160,6 +185,7 @@ class User {
             $oldValues = [
                 'first_name' => $user['first_name'],
                 'last_name' => $user['last_name'],
+                'alias_name' => $user['alias_name'] ?? null,
                 'phone_number' => $user['phone_number'],
                 'address' => $user['address'],
                 'city' => $user['city']
@@ -169,6 +195,7 @@ class User {
                 UPDATE users SET 
                 first_name = COALESCE(?, first_name),
                 last_name = COALESCE(?, last_name),
+                alias_name = COALESCE(?, alias_name),
                 phone_number = COALESCE(?, phone_number),
                 address = COALESCE(?, address),
                 city = COALESCE(?, city),
@@ -182,6 +209,7 @@ class User {
             execute($query, [
                 $data['first_name'] ?? null,
                 $data['last_name'] ?? null,
+                $data['alias_name'] ?? null,
                 $data['phone_number'] ?? null,
                 $data['address'] ?? null,
                 $data['city'] ?? null,

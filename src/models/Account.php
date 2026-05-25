@@ -113,6 +113,23 @@ class Account {
         ";
         return fetchAll($query, [$userId]);
     }
+
+    /**
+     * Get First Active Account for User
+     *
+     * @param int $userId User ID
+     * @return array|null Account data
+     */
+    public static function getActiveByUserId($userId) {
+        $query = "
+            SELECT * FROM accounts
+            WHERE user_id = ? AND status = 'active'
+            ORDER BY created_at ASC
+            LIMIT 1
+        ";
+
+        return fetchOne($query, [$userId]);
+    }
     
     /**
      * Get Account Balance
@@ -352,6 +369,56 @@ class Account {
                 'success' => false,
                 'message' => 'Account close failed'
             ];
+        }
+    }
+
+    /**
+     * Deactivate Account (mark inactive)
+     *
+     * @param int $accountId
+     * @return array Result
+     */
+    public static function deactivate($accountId) {
+        try {
+            $account = self::getById($accountId);
+            if (!$account) {
+                return [ 'success' => false, 'message' => 'Account not found' ];
+            }
+
+            execute("UPDATE accounts SET status = 'frozen', updated_at = NOW() WHERE account_id = ?", [$accountId]);
+
+            require_once __DIR__ . '/../utils/AuditLogger.php';
+            AuditLogger::logAccountOperation($account['user_id'], $accountId, 'deactivated', []);
+
+            return [ 'success' => true, 'message' => 'Account deactivated successfully' ];
+        } catch (Exception $e) {
+            error_log('Account deactivate failed: ' . $e->getMessage());
+            return [ 'success' => false, 'message' => 'Failed to deactivate account' ];
+        }
+    }
+
+    /**
+     * Activate Account (mark active)
+     *
+     * @param int $accountId
+     * @return array Result
+     */
+    public static function activate($accountId) {
+        try {
+            $account = self::getById($accountId);
+            if (!$account) {
+                return [ 'success' => false, 'message' => 'Account not found' ];
+            }
+
+            execute("UPDATE accounts SET status = 'active', updated_at = NOW() WHERE account_id = ?", [$accountId]);
+
+            require_once __DIR__ . '/../utils/AuditLogger.php';
+            AuditLogger::logAccountOperation($account['user_id'], $accountId, 'activated', []);
+
+            return [ 'success' => true, 'message' => 'Account activated successfully' ];
+        } catch (Exception $e) {
+            error_log('Account activate failed: ' . $e->getMessage());
+            return [ 'success' => false, 'message' => 'Failed to activate account' ];
         }
     }
 }

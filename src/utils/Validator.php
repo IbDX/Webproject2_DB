@@ -240,6 +240,16 @@ class Validator {
     public static function clearErrors() {
         self::$errors = [];
     }
+
+    /**
+     * Add a custom validation error
+     *
+     * @param string $fieldName
+     * @param string $message
+     */
+    public static function addError($fieldName, $message) {
+        self::$errors[$fieldName][] = $message;
+    }
     
     /**
      * Get error messages as array

@@ -39,6 +39,36 @@ class AccountController {
         
         Response::success($accounts, 'Accounts retrieved successfully');
     }
+
+    /**
+     * Create New Account
+     */
+    public static function createAccount() {
+        $userId = AuthMiddleware::getCurrentUserID();
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        $accountType = strtolower(trim($input['account_type'] ?? ''));
+        $allowedTypes = ['savings', 'checking', 'money_market'];
+
+        Validator::clearErrors();
+        Validator::required($accountType, 'Account Type');
+
+        if ($accountType && !in_array($accountType, $allowedTypes, true)) {
+            Validator::addError('account_type', 'Please choose a valid account type');
+        }
+
+        if (Validator::hasErrors()) {
+            Response::validationError(Validator::getErrors());
+        }
+
+        $result = Account::create($userId, $accountType);
+
+        if (!$result['success']) {
+            Response::error($result['message'], 400);
+        }
+
+        Response::success($result, 'Account created successfully', 201);
+    }
     
     /**
      * Get Single Account Details
@@ -134,7 +164,7 @@ class AccountController {
         
         // Validate input
         Validator::clearErrors();
-        Validator::required($input['to_account_id'] ?? '', 'Destination Account');
+        Validator::required($input['to_account_id'] ?? $input['to_account_number'] ?? '', 'Destination Account');
         Validator::required($input['amount'] ?? '', 'Amount');
         Validator::amount($input['amount'] ?? 0, 0.01, 999999.99, 'Amount');
         
@@ -142,16 +172,27 @@ class AccountController {
             Response::validationError(Validator::getErrors());
         }
         
-        // Verify destination account exists
-        $toAccount = Account::getById($input['to_account_id']);
+        // Resolve destination account by id or account number
+        $toAccountId = $input['to_account_id'] ?? null;
+        if (!$toAccountId && !empty($input['to_account_number'])) {
+            $toAccount = Account::getByNumber($input['to_account_number']);
+            $toAccountId = $toAccount['account_id'] ?? null;
+        } else {
+            $toAccount = Account::getById($toAccountId);
+        }
+
         if (!$toAccount) {
             Response::error('Destination account not found', 404);
+        }
+
+        if ($toAccount['account_id'] == $accountId) {
+            Response::error('Cannot transfer to the same account', 400);
         }
         
         // Process transfer
         $result = Transaction::transfer(
             $accountId,
-            $input['to_account_id'],
+            $toAccount['account_id'],
             $input['amount'],
             $input['description'] ?? null
         );
@@ -183,6 +224,45 @@ class AccountController {
         }
         
         Response::success(null, 'Account closed successfully');
+    }
+
+    /**
+     * Deactivate Account (API)
+     */
+    public static function deactivateAccount($accountId) {
+        $userId = AuthMiddleware::getCurrentUserID();
+
+        // Verify account ownership
+        $account = Account::getById($accountId);
+        if (!$account || $account['user_id'] != $userId) {
+            Response::notFound();
+        }
+
+        $result = Account::deactivate($accountId);
+        if (!$result['success']) {
+            Response::error($result['message'], 400);
+        }
+
+        Response::success($result, 'Account deactivated successfully');
+    }
+
+    /**
+     * Activate Account (API)
+     */
+    public static function activateAccount($accountId) {
+        $userId = AuthMiddleware::getCurrentUserID();
+
+        $account = Account::getById($accountId);
+        if (!$account || $account['user_id'] != $userId) {
+            Response::notFound();
+        }
+
+        $result = Account::activate($accountId);
+        if (!$result['success']) {
+            Response::error($result['message'], 400);
+        }
+
+        Response::success($result, 'Account activated successfully');
     }
     
     /**
