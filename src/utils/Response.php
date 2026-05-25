@@ -11,11 +11,19 @@ class Response {
         $isDevelopment = defined('APP_ENV') && APP_ENV === 'development';
 
         $isLocalDevOrigin = false;
+        $isSecureHttpsOrigin = false;
+        
         if ($requestOrigin !== '') {
             $isLocalDevOrigin = preg_match('#^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$#', $requestOrigin) === 1;
+            $isSecureHttpsOrigin = strpos($requestOrigin, 'https://') === 0;
         }
 
-        if ($requestOrigin !== '' && ($isDevelopment || $isLocalDevOrigin || in_array($requestOrigin, $allowedOrigins, true))) {
+        // Allow CORS if:
+        // 1. Development mode (all origins)
+        // 2. Local dev origin (127.0.0.1, localhost, ::1)
+        // 3. Origin is in the allowed list
+        // 4. Secure HTTPS origin (when not in production-only mode)
+        if ($requestOrigin !== '' && ($isDevelopment || $isLocalDevOrigin || in_array($requestOrigin, $allowedOrigins, true) || $isSecureHttpsOrigin)) {
             header('Access-Control-Allow-Origin: ' . $requestOrigin);
             header('Access-Control-Allow-Credentials: true');
             header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, ngrok-skip-browser-warning');

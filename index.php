@@ -14,9 +14,6 @@ if (getenv('APP_ENV') === 'development') {
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header('X-XSS-Protection: 1; mode=block');
-header('Access-Control-Allow-Origin: http://127.0.0.1:5500');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, ngrok-skip-browser-warning');
 
 define('APP_ROOT', dirname(__FILE__));
 define('APP_ENV', getenv('APP_ENV') ?: 'production');
