@@ -22,15 +22,13 @@ class User {
         Validator::email($data['email'] ?? '', 'Email');
         Validator::required($data['password'] ?? '', 'Password');
         Validator::required($data['password_confirm'] ?? '', 'Password Confirmation');
-        Validator::minLength($data['password'] ?? '', 12, 'Password');
+        Validator::minLength($data['password'] ?? '', 8, 'Password');
         Validator::required($data['first_name'] ?? '', 'First Name');
         Validator::required($data['last_name'] ?? '', 'Last Name');
         Validator::required($data['date_of_birth'] ?? '', 'Date of Birth');
         
-        if (!Validator::match($data['password'] ?? '', $data['password_confirm'] ?? '', 'Passwords')) {
-            Validator::clearErrors();
-            Validator::match($data['password'] ?? '', $data['password_confirm'] ?? '', 'Passwords');
-        }
+        // Ensure password and confirmation match (add error if not)
+        Validator::match($data['password'] ?? '', $data['password_confirm'] ?? '', 'Passwords');
         
         $passwordStrength = SecurityHelper::validatePasswordStrength($data['password'] ?? '');
         if (!$passwordStrength['valid']) {
@@ -249,7 +247,7 @@ class User {
         Validator::clearErrors();
         Validator::required($currentPassword, 'Current Password');
         Validator::required($newPassword, 'New Password');
-        Validator::minLength($newPassword, 12, 'New Password');
+        Validator::minLength($newPassword, 8, 'New Password');
         
         $passwordStrength = SecurityHelper::validatePasswordStrength($newPassword);
         if (!$passwordStrength['valid']) {
